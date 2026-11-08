@@ -119,6 +119,12 @@ def build(source_root, catalog):
 
     with ThreadPoolExecutor(max_workers=4) as executor:
         list(executor.map(export_images, jobs))
+    # Changed photo URLs bypass previously cached horizontal versions in browsers/CDNs.
+    for item in items:
+        for field in ("thumbnail", "image"):
+            path = SITE / "public" / item[field]
+            version = hashlib.sha256(path.read_bytes()).hexdigest()[:12]
+            item[field] += f"?v={version}"
     latest = max([catalog.stat().st_mtime] + [job[0].stat().st_mtime for job in jobs])
     data = {
         "updatedAt": datetime.fromtimestamp(latest, timezone.utc).isoformat(),

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
 import { FLAGS, selectItems, facetCounts, normalize, readState, stateParams, plural } from '../public/core.mjs';
 
 const data = JSON.parse(readFileSync(new URL('../public/catalog.json', import.meta.url)));
@@ -17,8 +18,11 @@ test('Every catalogue entry has two photos, valid metadata and a unique ID', () 
     assert.ok(Number.isInteger(item.variant) && item.variant >= 1);
     assert.ok(Number.isFinite(Date.parse(item.addedAt)), `Missing addition date: ${item.id}`);
     for (const key of ['thumbnail', 'image']) {
-      assert.match(item[key], /^images\/(thumbs|full)\/[a-f0-9]{16}\.webp$/);
-      assert.ok(existsSync(fileURLToPath(new URL(`../public/${item[key]}`, import.meta.url))), item[key]);
+      assert.match(item[key], /^images\/(thumbs|full)\/[a-f0-9]{16}\.webp\?v=[a-f0-9]{12}$/);
+      const url = new URL(`../public/${item[key]}`, import.meta.url);
+      const file = fileURLToPath(url);
+      assert.ok(existsSync(file), item[key]);
+      assert.equal(url.searchParams.get('v'), createHash('sha256').update(readFileSync(file)).digest('hex').slice(0, 12));
     }
   }
   for (const [field, counts] of [['country', data.countries], ['type', data.types]]) {

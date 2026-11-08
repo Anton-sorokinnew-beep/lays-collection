@@ -248,7 +248,7 @@ async function load() {
   $('grid').setAttribute('aria-busy', 'true');
   $('result-count').textContent = 'Загрузка…';
   try {
-    const response = await fetch(new URL('./catalog.json?v=5', import.meta.url), { cache: 'no-cache' });
+    const response = await fetch(new URL('./catalog.json?v=6', import.meta.url), { cache: 'no-cache' });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const loaded = await response.json();
     if (!Array.isArray(loaded.items) || loaded.total !== loaded.items.length) throw new Error('Invalid catalogue');
