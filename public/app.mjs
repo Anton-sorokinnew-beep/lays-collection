@@ -1,4 +1,4 @@
-import { FLAGS, countryLabel, compare, plural, searchText, selectItems, readState, stateParams } from './core.mjs';
+import { FLAGS, countryLabel, compare, plural, searchText, selectItems, facetCounts, readState, stateParams } from './core.mjs?v=3';
 
 const $ = (id) => document.getElementById(id);
 const PAGE_SIZE = 24;
@@ -26,16 +26,21 @@ function fillSelect(id, values, allLabel, label = (value) => value) {
   for (const [value, count] of Object.entries(values).sort(([a], [b]) => compare(sortLabel(a), sortLabel(b)))) {
     select.add(new Option(`${label(value)} (${count})`, value));
   }
+  const selected = state[id];
+  // Keep an unavailable selection explicit for stale links or a search with no matches.
+  if (selected && !Object.hasOwn(values, selected)) select.add(new Option(`${label(selected)} (0)`, selected));
+  select.value = selected;
 }
 
 function restoreControls() {
-  for (const key of ['country', 'type', 'flavor']) {
-    if (state[key] && !Array.from(controls[key].options).some((o) => o.value === state[key])) {
-      // A stale shared link remains visibly filtered instead of silently showing all items.
-      controls[key].add(new Option(state[key], state[key]));
-    }
-  }
   for (const [key, element] of Object.entries(controls)) element.value = state[key];
+}
+
+function updateFilterOptions() {
+  const counts = facetCounts(items, state);
+  fillSelect('country', counts.country, 'Все страны', (country) => `${FLAGS[country] || ''} ${countryLabel(country)}`);
+  fillSelect('type', counts.type, 'Все виды');
+  fillSelect('flavor', counts.flavor, 'Все вкусы');
 }
 
 function card(item) {
@@ -133,6 +138,7 @@ function renderChips() {
 
 function applyFilters() {
   results = selectItems(items, state);
+  updateFilterOptions();
   visibleCount = PAGE_SIZE;
   const filtering = Boolean(state.q || state.country || state.type || state.flavor);
   $('catalog-title').textContent = filtering ? 'Результаты поиска' : 'Все упаковки';
@@ -255,11 +261,6 @@ async function load() {
     $('countries-label').textContent = plural(countries, ['страна', 'страны', 'стран']);
     $('types-stat').textContent = types;
     $('types-label').textContent = plural(types, ['вид чипсов', 'вида чипсов', 'видов чипсов']);
-    fillSelect('country', data.countries, 'Все страны', (country) => `${FLAGS[country] || ''} ${countryLabel(country)}`);
-    fillSelect('type', data.types, 'Все виды');
-    const flavors = Object.create(null);
-    for (const item of items) flavors[item.flavor] = (flavors[item.flavor] || 0) + 1;
-    fillSelect('flavor', flavors, 'Все вкусы');
     const hero = [
       items.find((i) => i.country === 'Россия' && i.flavor === 'Сметана и зелень' && i.variant === 1),
       items.find((i) => i.country === 'Китай' && i.flavor === 'Острые раки' && i.variant === 1),

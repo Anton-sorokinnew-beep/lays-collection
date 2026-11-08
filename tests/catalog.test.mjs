@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { FLAGS, selectItems, normalize, readState, stateParams, plural } from '../public/core.mjs';
+import { FLAGS, selectItems, facetCounts, normalize, readState, stateParams, plural } from '../public/core.mjs';
 
 const data = JSON.parse(readFileSync(new URL('../public/catalog.json', import.meta.url)));
 const items = data.items;
@@ -61,4 +61,49 @@ test('Shared search links round-trip Cyrillic and special characters', () => {
 test('Russian counters use correct forms', () => {
   const forms = ['упаковка', 'упаковки', 'упаковок'];
   for (const [number, expected] of [[1, 'упаковка'], [2, 'упаковки'], [11, 'упаковок'], [21, 'упаковка'], [24, 'упаковки'], [360, 'упаковок']]) assert.equal(plural(number, forms), expected);
+});
+
+test('Country narrows types and flavors to the collection of that country', () => {
+  const china = items.filter((item) => item.country === 'Китай');
+  const facets = facetCounts(items, { ...blank, country: 'Китай' });
+  for (const field of ['type', 'flavor']) {
+    const expected = Object.fromEntries([...new Set(china.map((item) => item[field]))].map((value) => [value, china.filter((item) => item[field] === value).length]));
+    assert.deepEqual({ ...facets[field] }, expected);
+    assert.ok(Object.values(facets[field]).every((count) => count > 0));
+  }
+  assert.equal(facets.type.Kettle, undefined);
+});
+
+test('Type narrows countries and flavors in the reverse direction', () => {
+  const ridged = items.filter((item) => item.type === 'Рифленые');
+  const facets = facetCounts(items, { ...blank, type: 'Рифленые' });
+  for (const field of ['country', 'flavor']) {
+    const expected = Object.fromEntries([...new Set(ridged.map((item) => item[field]))].map((value) => [value, ridged.filter((item) => item[field] === value).length]));
+    assert.deepEqual({ ...facets[field] }, expected);
+  }
+  assert.equal(facets.country.Мексика, undefined);
+});
+
+test('All filters update each other and a selected field still offers compatible alternatives', () => {
+  const state = { ...blank, country: 'Китай', type: 'Рифленые', flavor: 'Кимчи' };
+  const facets = facetCounts(items, state);
+  for (const field of ['country', 'type', 'flavor']) {
+    const others = ['country', 'type', 'flavor'].filter((key) => key !== field);
+    const compatible = items.filter((item) => others.every((key) => item[key] === state[key]));
+    const expected = Object.fromEntries([...new Set(compatible.map((item) => item[field]))].map((value) => [value, compatible.filter((item) => item[field] === value).length]));
+    assert.deepEqual({ ...facets[field] }, expected);
+  }
+  assert.ok(Object.keys(facets.flavor).length > 1);
+  assert.ok(facets.flavor['Острый хотпот'] > 0);
+  const reset = facetCounts(items, blank);
+  assert.deepEqual({ ...reset.country }, data.countries);
+  assert.deepEqual({ ...reset.type }, data.types);
+});
+
+test('Search narrows dropdown choices and zero matches never turn into an unfiltered list', () => {
+  const found = facetCounts(items, { ...blank, country: 'Китай', q: 'острый' });
+  const expected = items.filter((item) => item.country === 'Китай' && normalize(`${item.flavor} ${item.type}`).includes('острый'));
+  assert.deepEqual(Object.keys(found.flavor).sort(), [...new Set(expected.map((item) => item.flavor))].sort());
+  const none = facetCounts(items, { ...blank, q: 'zxqv-неттакоговкуса' });
+  for (const field of ['country', 'type', 'flavor']) assert.equal(Object.keys(none[field]).length, 0);
 });

@@ -28,14 +28,28 @@ export function searchText(item) {
   return normalize([item.flavor, item.country, countryLabel(item.country), COUNTRY_ALIASES[item.country] || '', item.type, 'Lay’s Lays Лейс', item.variant > 1 ? `вариант ${item.variant}` : ''].join(' '));
 }
 
+const FILTER_FIELDS = ['country', 'type', 'flavor'];
+
+function matchesItem(item, state, terms, ignoredField = '') {
+  return FILTER_FIELDS.every((field) => field === ignoredField || !state[field] || item[field] === state[field]) &&
+    terms.every((term) => (item.search || searchText(item)).includes(term));
+}
+
+export function facetCounts(items, state) {
+  const terms = normalize(state.q || '').split(' ').filter(Boolean);
+  // Each list respects the other filters, while allowing a different value in its own field.
+  return Object.fromEntries(FILTER_FIELDS.map((field) => {
+    const counts = Object.create(null);
+    for (const item of items) {
+      if (matchesItem(item, state, terms, field)) counts[item[field]] = (counts[item[field]] || 0) + 1;
+    }
+    return [field, counts];
+  }));
+}
+
 export function selectItems(items, state) {
   const terms = normalize(state.q || '').split(' ').filter(Boolean);
-  const result = items.filter((item) =>
-    (!state.country || item.country === state.country) &&
-    (!state.type || item.type === state.type) &&
-    (!state.flavor || item.flavor === state.flavor) &&
-    terms.every((term) => (item.search || searchText(item)).includes(term))
-  );
+  const result = items.filter((item) => matchesItem(item, state, terms));
   return result.sort((a, b) => {
     if (state.sort === 'country') return compare(countryLabel(a.country), countryLabel(b.country)) || compare(a.flavor, b.flavor) || a.variant - b.variant;
     if (state.sort === 'number') return a.number - b.number;
