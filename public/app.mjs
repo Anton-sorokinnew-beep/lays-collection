@@ -10,6 +10,7 @@ let state = readState(location.search);
 let currentItem = null;
 let opener = null;
 let searchTimer;
+let lastRandomId = null;
 const dialog = $('pack-dialog');
 const controls = { q: $('search'), country: $('country'), type: $('type'), flavor: $('flavor'), sort: $('sort') };
 
@@ -207,6 +208,13 @@ for (const key of ['country', 'type', 'flavor', 'sort']) {
 }
 $('reset').addEventListener('click', reset);
 $('empty-reset').addEventListener('click', reset);
+$('random-flavor').addEventListener('click', () => {
+  if (!items.length) return;
+  const candidates = items.length > 1 ? items.filter((item) => item.id !== lastRandomId) : items;
+  const item = candidates[Math.floor(Math.random() * candidates.length)];
+  lastRandomId = item.id;
+  openPack(item, $('random-flavor'));
+});
 $('mobile-filters').addEventListener('click', () => {
   const open = $('filter-panel').classList.toggle('is-open');
   $('mobile-filters').setAttribute('aria-expanded', String(open));
@@ -265,6 +273,7 @@ async function load() {
     applyFilters();
     const sharedItem = items.find((item) => item.id === itemId);
     if (sharedItem) openPack(sharedItem);
+    $('random-flavor').disabled = items.length === 0;
   } catch (error) {
     $('grid').setAttribute('aria-busy', 'false');
     $('error-state').hidden = false;
