@@ -51,6 +51,10 @@ export function selectItems(items, state) {
   const terms = normalize(state.q || '').split(' ').filter(Boolean);
   const result = items.filter((item) => matchesItem(item, state, terms));
   return result.sort((a, b) => {
+    if (state.sort === 'newest' || state.sort === 'oldest') {
+      const delta = Date.parse(a.addedAt) - Date.parse(b.addedAt);
+      return (state.sort === 'newest' ? -delta : delta) || a.number - b.number;
+    }
     if (state.sort === 'country') return compare(countryLabel(a.country), countryLabel(b.country)) || compare(a.flavor, b.flavor) || a.variant - b.variant;
     if (state.sort === 'number') return a.number - b.number;
     return compare(a.flavor, b.flavor) || compare(a.country, b.country) || compare(a.type, b.type) || a.variant - b.variant;
@@ -59,7 +63,7 @@ export function selectItems(items, state) {
 
 export function readState(search) {
   const params = new URLSearchParams(search);
-  return { q: (params.get('q') || '').slice(0, 300), country: params.get('country') || '', type: params.get('type') || '', flavor: params.get('flavor') || '', sort: ['name', 'country', 'number'].includes(params.get('sort')) ? params.get('sort') : 'name' };
+  return { q: (params.get('q') || '').slice(0, 300), country: params.get('country') || '', type: params.get('type') || '', flavor: params.get('flavor') || '', sort: ['name', 'country', 'number', 'newest', 'oldest'].includes(params.get('sort')) ? params.get('sort') : 'name' };
 }
 
 export function stateParams(state, item = '') {

@@ -18,6 +18,7 @@ SITE = Path(__file__).resolve().parents[1]
 DEFAULT_CATALOG = Path("outputs/01a1bbcd-8dff-7bc3-92f3-60a1d71522b8/Коллекция Lay’s.xlsx")
 NS = {"x": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
 REL = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+INITIAL_PUBLISHED_AT = "2026-11-08T18:06:56+00:00"
 
 
 def normalized(text):
@@ -59,6 +60,8 @@ def read_records(path):
 
 def export_images(job):
     source, thumbnail, full = job
+    if all(target.exists() and target.stat().st_mtime >= source.stat().st_mtime for target in (thumbnail, full)):
+        return
     # The EXIF orientation is applied and all camera metadata is omitted from web copies.
     with Image.open(source) as original:
         oriented = ImageOps.exif_transpose(original).convert("RGB")
@@ -73,6 +76,10 @@ def export_images(job):
 
 
 def build(source_root, catalog):
+    output = SITE / "public/catalog.json"
+    previous = json.loads(output.read_text(encoding="utf-8")) if output.exists() else {"items": []}
+    added_dates = {item["id"]: item.get("addedAt") or INITIAL_PUBLISHED_AT for item in previous["items"]}
+    exported_at = datetime.now(timezone.utc).isoformat()
     photo_root = source_root / "Фото"
     by_name = {}
     for photo in photo_root.rglob("*"):
@@ -104,6 +111,7 @@ def build(source_root, catalog):
             "type": normalized(row["C"]),
             "flavor": normalized(row["D"]),
             "variant": int(row["E"]),
+            "addedAt": added_dates.get(identifier, exported_at),
             "thumbnail": f"images/thumbs/{identifier}.webp",
             "image": f"images/full/{identifier}.webp",
         })
@@ -119,7 +127,6 @@ def build(source_root, catalog):
         "types": dict(sorted(Counter(i["type"] for i in items).items())),
         "items": items,
     }
-    output = SITE / "public/catalog.json"
     temporary = output.with_suffix(".tmp")
     temporary.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
     temporary.replace(output)

@@ -15,6 +15,7 @@ test('Every catalogue entry has two photos, valid metadata and a unique ID', () 
   for (const item of items) {
     assert.ok(item.country && item.type && item.flavor && FLAGS[item.country]);
     assert.ok(Number.isInteger(item.variant) && item.variant >= 1);
+    assert.ok(Number.isFinite(Date.parse(item.addedAt)), `Missing addition date: ${item.id}`);
     for (const key of ['thumbnail', 'image']) {
       assert.match(item[key], /^images\/(thumbs|full)\/[a-f0-9]{16}\.webp$/);
       assert.ok(existsSync(fileURLToPath(new URL(`../public/${item[key]}`, import.meta.url))), item[key]);
@@ -106,4 +107,19 @@ test('Search narrows dropdown choices and zero matches never turn into an unfilt
   assert.deepEqual(Object.keys(found.flavor).sort(), [...new Set(expected.map((item) => item.flavor))].sort());
   const none = facetCounts(items, { ...blank, q: 'zxqv-неттакоговкуса' });
   for (const field of ['country', 'type', 'flavor']) assert.equal(Object.keys(none[field]).length, 0);
+});
+
+test('Addition date sorting uses timestamps rather than catalogue numbers or filenames', () => {
+  const sample = [
+    { ...items[0], id: 'middle', number: 99, addedAt: '2026-11-09T10:00:00Z' },
+    { ...items[0], id: 'old', number: 100, addedAt: '2026-11-08T18:06:56Z' },
+    { ...items[0], id: 'new', number: 1, addedAt: '2026-11-10T10:00:00Z' },
+  ];
+  assert.deepEqual(selectItems(sample, { ...blank, sort: 'newest' }).map(i => i.id), ['new', 'middle', 'old']);
+  assert.deepEqual(selectItems(sample, { ...blank, sort: 'oldest' }).map(i => i.id), ['old', 'middle', 'new']);
+  assert.deepEqual(sample.map(i => i.id), ['middle', 'old', 'new']);
+  for (const sort of ['newest', 'oldest']) {
+    const state = { ...blank, sort, country: 'Китай' };
+    assert.deepEqual(readState('?' + stateParams(state)), state);
+  }
 });

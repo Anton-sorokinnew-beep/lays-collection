@@ -1,4 +1,4 @@
-import { FLAGS, countryLabel, compare, plural, searchText, selectItems, facetCounts, readState, stateParams } from './core.mjs?v=3';
+import { FLAGS, countryLabel, compare, plural, searchText, selectItems, facetCounts, readState, stateParams } from './core.mjs?v=5';
 
 const $ = (id) => document.getElementById(id);
 const PAGE_SIZE = 24;
@@ -166,6 +166,7 @@ function openPack(item, source = null, updateUrl = true) {
   $('dialog-type').textContent = item.type;
   $('dialog-variant').textContent = item.variant;
   $('dialog-number').textContent = `№ ${item.number}`;
+  $('dialog-added').textContent = item.addedAt ? new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Moscow' }).format(new Date(item.addedAt)) : '—';
   $('dialog-image').src = item.image;
   $('dialog-image').alt = `Упаковка Lay’s ${item.flavor}, ${countryLabel(item.country)}, ${item.type}, вариант ${item.variant}`;
   $('open-photo').href = item.image;
@@ -247,7 +248,7 @@ async function load() {
   $('grid').setAttribute('aria-busy', 'true');
   $('result-count').textContent = 'Загрузка…';
   try {
-    const response = await fetch(new URL('./catalog.json', import.meta.url));
+    const response = await fetch(new URL('./catalog.json?v=5', import.meta.url), { cache: 'no-cache' });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const loaded = await response.json();
     if (!Array.isArray(loaded.items) || loaded.total !== loaded.items.length) throw new Error('Invalid catalogue');

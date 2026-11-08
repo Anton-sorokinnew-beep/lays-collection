@@ -11,7 +11,7 @@
   <title>Коллекция Lay’s — фотокаталог</title>
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./styles.css?v=4">
-  <script type="module" src="./app.mjs?v=3"></script>
+  <script type="module" src="./app.mjs?v=5"></script>
 </head>
 <body>
   <a class="skip-link" href="#catalog">Перейти к каталогу</a>
@@ -80,7 +80,7 @@
       <div id="active-filters" class="active-filters" aria-label="Выбранные фильтры"></div>
       <div class="catalog-toolbar">
         <div class="results-title"><h2 id="catalog-title">Все упаковки</h2><span id="result-count" role="status" aria-live="polite">Загрузка…</span></div>
-        <label class="sort-label" for="sort"><span>Сортировка:</span><select id="sort"><option value="name">По названию</option><option value="country">По странам</option><option value="number">По каталогу</option></select></label>
+        <label class="sort-label" for="sort"><span>Сортировка:</span><select id="sort"><option value="name">По названию</option><option value="country">По странам</option><option value="number">По каталогу</option><option value="newest">Сначала новые</option><option value="oldest">Сначала старые</option></select></label>
       </div>
       <div id="grid" class="grid" aria-busy="true"></div>
       <div id="empty-state" class="empty-state" hidden><span class="empty-icon" aria-hidden="true">⌕</span><h3>Пока нет совпадений</h3><p>Попробуй другой запрос или сбрось фильтры.</p><button type="button" id="empty-reset" class="yellow-button">Показать всю коллекцию</button></div>
@@ -99,7 +99,7 @@
   <dialog id="pack-dialog" class="pack-dialog" aria-labelledby="dialog-title">
     <button id="close-dialog" class="dialog-close" type="button" aria-label="Закрыть карточку">×</button>
     <div class="dialog-photo"><img id="dialog-image" alt=""></div>
-    <div class="dialog-info"><p class="eyebrow">В МОЕЙ КОЛЛЕКЦИИ</p><h2 id="dialog-title"></h2><p class="dialog-country" id="dialog-country"></p><dl><div><dt>Вид чипсов</dt><dd id="dialog-type"></dd></div><div id="variant-row"><dt>Вариант упаковки</dt><dd id="dialog-variant"></dd></div><div><dt>Номер в каталоге</dt><dd id="dialog-number"></dd></div></dl><button id="share" type="button" class="yellow-button">Скопировать ссылку</button><p id="share-status" class="share-status" role="status" aria-live="polite"></p><a id="open-photo" class="photo-link" target="_blank" rel="noopener">Открыть фото крупнее <span aria-hidden="true">↗</span></a></div>
+    <div class="dialog-info"><p class="eyebrow">В МОЕЙ КОЛЛЕКЦИИ</p><h2 id="dialog-title"></h2><p class="dialog-country" id="dialog-country"></p><dl><div><dt>Вид чипсов</dt><dd id="dialog-type"></dd></div><div id="variant-row"><dt>Вариант упаковки</dt><dd id="dialog-variant"></dd></div><div><dt>На сайте с</dt><dd id="dialog-added"></dd></div><div><dt>Номер в каталоге</dt><dd id="dialog-number"></dd></div></dl><button id="share" type="button" class="yellow-button">Скопировать ссылку</button><p id="share-status" class="share-status" role="status" aria-live="polite"></p><a id="open-photo" class="photo-link" target="_blank" rel="noopener">Открыть фото крупнее <span aria-hidden="true">↗</span></a></div>
   </dialog>
 </body>
 </html>
