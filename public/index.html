@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f9ca32">
+  <meta name="description" content="Личная коллекция упаковок Lay’s со всего мира. Фотографии, поиск по вкусу и фильтры по стране и виду чипсов.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Коллекция Lay’s — мир вкусов">
+  <meta property="og:description" content="Найди вкус в моей коллекции. Фотокаталог упаковок из разных стран.">
+  <title>Коллекция Lay’s — фотокаталог</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./app.mjs"></script>
+</head>
+<body>
+  <a class="skip-link" href="#catalog">Перейти к каталогу</a>
+  <header class="header">
+    <div class="header-inner wrap">
+      <a class="brand" href="./" aria-label="Коллекция Lay’s, главная">
+        <span class="brand-mark" aria-hidden="true">Lay’s</span>
+        <span>Коллекция <b>Lay’s</b></span>
+      </a>
+      <nav aria-label="Основная навигация">
+        <a class="nav-link active" href="#catalog">Каталог</a>
+        <a class="nav-link" href="#about">О коллекции</a>
+      </nav>
+      <span class="header-note"><span class="status-dot"></span> Личная коллекция</span>
+    </div>
+  </header>
+  <main>
+    <section class="hero wrap" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow"><span></span> ВКУСЫ ИЗ РАЗНЫХ УГОЛКОВ МИРА</p>
+        <h1 id="hero-title">Мир вкусов<br>в одной <span>коллекции.</span></h1>
+        <p class="hero-description">Знакомые и неожиданные вкусы Lay’s.<br class="desktop-break"> Посмотри, какие упаковки уже есть у меня.</p>
+        <div class="stats" aria-label="Статистика коллекции">
+          <div class="stat stat-primary"><strong id="total-stat">—</strong><span id="total-label">упаковок в коллекции</span></div>
+          <div class="stat"><strong id="countries-stat">—</strong><span id="countries-label">стран</span></div>
+          <div class="stat"><strong id="types-stat">—</strong><span id="types-label">видов чипсов</span></div>
+        </div>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <div class="hero-disc"></div>
+        <div class="hero-photo hero-photo-left"><img id="hero-left" alt=""></div>
+        <div class="hero-photo hero-photo-right"><img id="hero-right" alt=""></div>
+        <div class="hero-photo hero-photo-center"><img id="hero-center" alt=""></div>
+        <div class="hero-sticker">Один бренд.<br>Целый мир вкусов.<span>✦</span></div>
+        <span class="art-spark spark-one">✦</span><span class="art-spark spark-two">✧</span>
+      </div>
+    </section>
+
+    <section id="catalog" class="catalog wrap" aria-labelledby="catalog-title">
+      <div class="search-area">
+        <label class="search-box" for="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="10.7" cy="10.7" r="7.2"/><path d="m16 16 5 5"/></svg>
+          <input id="search" type="search" placeholder="Найти вкус, страну или упаковку…" maxlength="300" autocomplete="off" aria-label="Поиск по коллекции">
+          <kbd aria-hidden="true">/</kbd>
+        </label>
+        <button id="mobile-filters" class="mobile-filters" type="button" aria-expanded="false" aria-controls="filter-panel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3 7h18M3 17h18"/><circle cx="9" cy="7" r="3" fill="currentColor"/><circle cx="15" cy="17" r="3" fill="currentColor"/></svg>
+          Фильтры <span id="filter-count"></span>
+        </button>
+      </div>
+      <div id="filter-panel" class="filter-panel">
+        <div class="filter-select"><label for="country">Страна</label><select id="country"><option value="">Все страны</option></select></div>
+        <div class="filter-select"><label for="type">Вид чипсов</label><select id="type"><option value="">Все виды</option></select></div>
+        <div class="filter-select filter-flavor"><label for="flavor">Вкус</label><select id="flavor"><option value="">Все вкусы</option></select></div>
+        <button class="reset-button" id="reset" type="button" disabled>Сбросить фильтры <span aria-hidden="true">↺</span></button>
+      </div>
+      <div id="active-filters" class="active-filters" aria-label="Выбранные фильтры"></div>
+      <div class="catalog-toolbar">
+        <div class="results-title"><h2 id="catalog-title">Все упаковки</h2><span id="result-count" role="status" aria-live="polite">Загрузка…</span></div>
+        <label class="sort-label" for="sort"><span>Сортировка:</span><select id="sort"><option value="name">По названию</option><option value="country">По странам</option><option value="number">По каталогу</option></select></label>
+      </div>
+      <div id="grid" class="grid" aria-busy="true"></div>
+      <div id="empty-state" class="empty-state" hidden><span class="empty-icon" aria-hidden="true">⌕</span><h3>Пока нет совпадений</h3><p>Попробуй другой запрос или сбрось фильтры.</p><button type="button" id="empty-reset" class="yellow-button">Показать всю коллекцию</button></div>
+      <div id="error-state" class="empty-state" hidden><h3>Не удалось загрузить каталог</h3><p>Проверь подключение и попробуй ещё раз.</p><button type="button" id="retry" class="yellow-button">Повторить</button></div>
+      <div class="load-more-area"><button id="load-more" class="load-more" type="button" hidden>Показать ещё <span aria-hidden="true">↓</span></button><p id="shown-count"></p></div>
+      <noscript><p class="noscript">Для поиска и просмотра фотокаталога включи JavaScript в браузере.</p></noscript>
+    </section>
+
+    <section id="about" class="about wrap" aria-labelledby="about-title">
+      <div><p class="eyebrow">МАЛЕНЬКИЕ УПАКОВКИ, БОЛЬШАЯ ГЕОГРАФИЯ</p><h2 id="about-title">У каждого вкуса —<br>своя история.</h2></div>
+      <div class="about-copy"><p>Я собираю упаковки Lay’s из разных стран: от привычного сыра до вкусов, которые сложно представить. Этот каталог помогает увидеть коллекцию целиком и быстро найти нужную упаковку.</p><p>Каждая карточка — отдельная упаковка из коллекции. У одного вкуса бывает несколько вариантов оформления: они показаны отдельно.</p><span class="updated" id="updated"></span></div>
+    </section>
+  </main>
+  <footer class="footer wrap"><span class="footer-brand">Коллекция Lay’s</span><span>Личная коллекция. Неофициальный сайт.</span><a href="#">Наверх <span aria-hidden="true">↑</span></a></footer>
+
+  <dialog id="pack-dialog" class="pack-dialog" aria-labelledby="dialog-title">
+    <button id="close-dialog" class="dialog-close" type="button" aria-label="Закрыть карточку">×</button>
+    <div class="dialog-photo"><img id="dialog-image" alt=""></div>
+    <div class="dialog-info"><p class="eyebrow">В МОЕЙ КОЛЛЕКЦИИ</p><h2 id="dialog-title"></h2><p class="dialog-country" id="dialog-country"></p><dl><div><dt>Вид чипсов</dt><dd id="dialog-type"></dd></div><div id="variant-row"><dt>Вариант упаковки</dt><dd id="dialog-variant"></dd></div><div><dt>Номер в каталоге</dt><dd id="dialog-number"></dd></div></dl><button id="share" type="button" class="yellow-button">Скопировать ссылку</button><p id="share-status" class="share-status" role="status" aria-live="polite"></p><a id="open-photo" class="photo-link" target="_blank" rel="noopener">Открыть фото крупнее <span aria-hidden="true">↗</span></a></div>
+  </dialog>
+</body>
+</html>
