@@ -1,9 +1,10 @@
-import { FLAGS, countryLabel, compare, plural, searchText, selectItems, facetCounts, readState, stateParams } from './core.mjs?v=5';
+import { FLAGS, countryLabel, compare, plural, searchText, selectItems, facetCounts, indexVariants, readState, stateParams } from './core.mjs?v=7';
 
 const $ = (id) => document.getElementById(id);
 const PAGE_SIZE = 24;
 let data;
 let items = [];
+let variantIndex = new Map();
 let results = [];
 let visibleCount = PAGE_SIZE;
 let state = readState(location.search);
@@ -43,9 +44,69 @@ function updateFilterOptions() {
   fillSelect('flavor', counts.flavor, 'Все вкусы');
 }
 
+function variantPicker(item, context) {
+  const variants = variantIndex.get(item.id) || [];
+  if (variants.length < 2) return null;
+  const picker = document.createElement('div');
+  picker.className = `variant-picker variant-picker--${context}`;
+  picker.setAttribute('role', 'group');
+  picker.setAttribute('aria-label', `Варианты упаковки: ${item.flavor}, ${countryLabel(item.country)}, ${item.type}`);
+  const label = document.createElement('p');
+  label.className = 'variant-picker-label';
+  label.textContent = `Варианты упаковки (${variants.length})`;
+  const row = document.createElement('div');
+  row.className = 'variant-thumbs';
+  for (const variant of variants) {
+    const thumb = document.createElement('button');
+    thumb.type = 'button';
+    thumb.className = 'variant-thumb';
+    thumb.dataset.variantId = variant.id;
+    const active = variant.id === item.id;
+    thumb.classList.toggle('is-active', active);
+    thumb.setAttribute('aria-pressed', String(active));
+    thumb.setAttribute('aria-label', `Вариант ${variant.variant}, ${variant.flavor}, ${countryLabel(variant.country)}, ${variant.type}`);
+    thumb.title = `Вариант ${variant.variant}`;
+    const image = new Image();
+    image.src = variant.thumbnail;
+    image.alt = '';
+    image.loading = 'lazy';
+    image.decoding = 'async';
+    image.width = 44;
+    image.height = 62;
+    const number = document.createElement('span');
+    number.className = 'variant-number';
+    number.textContent = variant.variant;
+    number.setAttribute('aria-hidden', 'true');
+    thumb.append(image, number);
+    thumb.addEventListener('click', () => {
+      const inDialog = context === 'dialog';
+      if (inDialog && currentItem?.id === variant.id) return;
+      const scrollLeft = row.scrollLeft;
+      openPack(variant, inDialog ? null : thumb);
+      if (inDialog) {
+        const nextRow = $('dialog-variants').querySelector('.variant-thumbs');
+        nextRow.scrollLeft = scrollLeft;
+        nextRow.querySelector('[aria-pressed="true"]').focus({ preventScroll: true });
+      }
+    });
+    row.append(thumb);
+  }
+  picker.append(label, row);
+  return picker;
+}
+
+function renderDialogVariants(item) {
+  const host = $('dialog-variants');
+  const picker = variantPicker(item, 'dialog');
+  host.replaceChildren();
+  host.hidden = !picker;
+  if (picker) host.append(picker);
+}
+
 function card(item) {
   const article = document.createElement('article');
   article.className = 'card';
+  article.dataset.itemId = item.id;
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'card-button';
@@ -93,6 +154,8 @@ function card(item) {
   button.append(photo, body);
   button.addEventListener('click', () => openPack(item, button));
   article.append(button);
+  const picker = variantPicker(item, 'card');
+  if (picker) article.append(picker);
   return article;
 }
 
@@ -160,7 +223,7 @@ function reset() {
 
 function openPack(item, source = null, updateUrl = true) {
   currentItem = item;
-  opener = source;
+  if (!dialog.open) opener = source;
   $('dialog-title').textContent = item.flavor;
   $('dialog-country').textContent = `${FLAGS[item.country] || ''} ${countryLabel(item.country)}`;
   $('dialog-type').textContent = item.type;
@@ -170,10 +233,14 @@ function openPack(item, source = null, updateUrl = true) {
   $('dialog-image').src = item.image;
   $('dialog-image').alt = `Упаковка Lay’s ${item.flavor}, ${countryLabel(item.country)}, ${item.type}, вариант ${item.variant}`;
   $('open-photo').href = item.image;
+  renderDialogVariants(item);
   $('share-status').textContent = '';
   $('share').textContent = 'Скопировать ссылку';
   document.body.style.overflow = 'hidden';
   if (!dialog.open) dialog.showModal();
+  const variantRow = $('dialog-variants').querySelector('.variant-thumbs');
+  const activeThumb = variantRow?.querySelector('[aria-pressed="true"]');
+  if (activeThumb) variantRow.scrollLeft = Math.max(0, activeThumb.offsetLeft + activeThumb.offsetWidth - variantRow.clientWidth + 3);
   if (updateUrl) syncUrl(item.id);
 }
 
@@ -254,6 +321,7 @@ async function load() {
     if (!Array.isArray(loaded.items) || loaded.total !== loaded.items.length) throw new Error('Invalid catalogue');
     data = loaded;
     items = data.items.map((item) => ({ ...item, search: searchText(item) }));
+    variantIndex = indexVariants(items);
     $('total-stat').textContent = data.total;
     $('total-label').textContent = `${plural(data.total, ['упаковка', 'упаковки', 'упаковок'])} в коллекции`;
     const countries = Object.keys(data.countries).length;

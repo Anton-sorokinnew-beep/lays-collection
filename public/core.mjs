@@ -28,6 +28,21 @@ export function searchText(item) {
   return normalize([item.flavor, item.country, countryLabel(item.country), COUNTRY_ALIASES[item.country] || '', item.type, 'Lay’s Lays Лейс', item.variant > 1 ? `вариант ${item.variant}` : ''].join(' '));
 }
 
+export function indexVariants(items) {
+  const groups = new Map();
+  for (const item of items) {
+    const key = JSON.stringify([item.country, item.type, item.flavor.normalize('NFC')]);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(item);
+  }
+  const byId = new Map();
+  for (const group of groups.values()) {
+    group.sort((a, b) => a.variant - b.variant || a.number - b.number);
+    for (const item of group) byId.set(item.id, group);
+  }
+  return byId;
+}
+
 const FILTER_FIELDS = ['country', 'type', 'flavor'];
 
 function matchesItem(item, state, terms, ignoredField = '') {

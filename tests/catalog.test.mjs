@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
-import { FLAGS, selectItems, facetCounts, normalize, readState, stateParams, plural } from '../public/core.mjs';
+import { FLAGS, selectItems, facetCounts, indexVariants, normalize, readState, stateParams, plural } from '../public/core.mjs';
 
 const data = JSON.parse(readFileSync(new URL('../public/catalog.json', import.meta.url)));
 const items = data.items;
@@ -126,4 +126,20 @@ test('Addition date sorting uses timestamps rather than catalogue numbers or fil
     const state = { ...blank, sort, country: 'Китай' };
     assert.deepEqual(readState('?' + stateParams(state)), state);
   }
+});
+
+test('Variant thumbnails group only the same flavor, chip type and country', () => {
+  const originalOrder = items.map(item => item.id);
+  const index = indexVariants(items);
+  const onion = items.find(item => item.country === 'Россия' && item.type === 'Классика' && item.flavor === 'Зеленый лук');
+  assert.deepEqual(index.get(onion.id).map(item => item.variant), [1, 2, 3, 4]);
+  for (const item of items) {
+    const group = index.get(item.id);
+    assert.ok(group.some(variant => variant.id === item.id));
+    assert.ok(group.every(variant => variant.country === item.country && variant.type === item.type && variant.flavor === item.flavor));
+    assert.deepEqual(group.map(variant => variant.variant), group.map(variant => variant.variant).sort((a, b) => a - b));
+  }
+  const singleton = items.find(item => item.flavor === 'Гуакамоле по-мексикански');
+  assert.equal(index.get(singleton.id).length, 1);
+  assert.deepEqual(items.map(item => item.id), originalOrder);
 });

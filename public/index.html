@@ -10,8 +10,8 @@
   <meta property="og:description" content="Найди вкус в моей коллекции. Фотокаталог упаковок из разных стран.">
   <title>Коллекция Lay’s — фотокаталог</title>
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./styles.css?v=4">
-  <script type="module" src="./app.mjs?v=6"></script>
+  <link rel="stylesheet" href="./styles.css?v=7">
+  <script type="module" src="./app.mjs?v=7"></script>
 </head>
 <body>
   <a class="skip-link" href="#catalog">Перейти к каталогу</a>
@@ -99,7 +99,7 @@
   <dialog id="pack-dialog" class="pack-dialog" aria-labelledby="dialog-title">
     <button id="close-dialog" class="dialog-close" type="button" aria-label="Закрыть карточку">×</button>
     <div class="dialog-photo"><img id="dialog-image" alt=""></div>
-    <div class="dialog-info"><p class="eyebrow">В МОЕЙ КОЛЛЕКЦИИ</p><h2 id="dialog-title"></h2><p class="dialog-country" id="dialog-country"></p><dl><div><dt>Вид чипсов</dt><dd id="dialog-type"></dd></div><div id="variant-row"><dt>Вариант упаковки</dt><dd id="dialog-variant"></dd></div><div><dt>На сайте с</dt><dd id="dialog-added"></dd></div><div><dt>Номер в каталоге</dt><dd id="dialog-number"></dd></div></dl><button id="share" type="button" class="yellow-button">Скопировать ссылку</button><p id="share-status" class="share-status" role="status" aria-live="polite"></p><a id="open-photo" class="photo-link" target="_blank" rel="noopener">Открыть фото крупнее <span aria-hidden="true">↗</span></a></div>
+    <div class="dialog-info"><p class="eyebrow">В МОЕЙ КОЛЛЕКЦИИ</p><h2 id="dialog-title"></h2><p class="dialog-country" id="dialog-country"></p><div id="dialog-variants" class="dialog-variants" hidden></div><dl><div><dt>Вид чипсов</dt><dd id="dialog-type"></dd></div><div id="variant-row"><dt>Вариант упаковки</dt><dd id="dialog-variant"></dd></div><div><dt>На сайте с</dt><dd id="dialog-added"></dd></div><div><dt>Номер в каталоге</dt><dd id="dialog-number"></dd></div></dl><button id="share" type="button" class="yellow-button">Скопировать ссылку</button><p id="share-status" class="share-status" role="status" aria-live="polite"></p><a id="open-photo" class="photo-link" target="_blank" rel="noopener">Открыть фото крупнее <span aria-hidden="true">↗</span></a></div>
   </dialog>
 </body>
 </html>
