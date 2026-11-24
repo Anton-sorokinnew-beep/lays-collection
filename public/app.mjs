@@ -315,7 +315,7 @@ async function load() {
   $('grid').setAttribute('aria-busy', 'true');
   $('result-count').textContent = 'Загрузка…';
   try {
-    const response = await fetch(new URL('./catalog.json?v=6', import.meta.url), { cache: 'no-cache' });
+    const response = await fetch(new URL('./catalog.json?v=7', import.meta.url), { cache: 'no-cache' });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const loaded = await response.json();
     if (!Array.isArray(loaded.items) || loaded.total !== loaded.items.length) throw new Error('Invalid catalogue');
@@ -329,7 +329,7 @@ async function load() {
     $('countries-stat').textContent = countries;
     $('countries-label').textContent = plural(countries, ['страна', 'страны', 'стран']);
     $('types-stat').textContent = types;
-    $('types-label').textContent = plural(types, ['вид чипсов', 'вида чипсов', 'видов чипсов']);
+    $('types-label').textContent = plural(types, ['вид продукта', 'вида продуктов', 'видов продуктов']);
     const hero = [
       items.find((i) => i.country === 'Россия' && i.flavor === 'Сметана и зелень' && i.variant === 1),
       items.find((i) => i.country === 'Китай' && i.flavor === 'Острые раки' && i.variant === 1),
