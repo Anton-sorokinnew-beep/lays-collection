@@ -41,8 +41,8 @@ test('Combined filters agree with the source and preserve different packaging va
     }
   }
   const cheese = selectItems(items, { ...blank, country: 'Россия', type: 'Классика', flavor: 'Сыр' });
-  assert.equal(cheese.length, 4);
-  assert.deepEqual(cheese.map((i) => i.variant), [1, 2, 3, 4]);
+  assert.equal(cheese.length, 5);
+  assert.deepEqual(cheese.map((i) => i.variant), [1, 2, 3, 4, 5]);
 });
 
 test('Search handles case, ё/е, punctuation, combined words and no matches', () => {
