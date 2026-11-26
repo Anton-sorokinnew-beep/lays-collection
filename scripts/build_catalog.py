@@ -19,6 +19,11 @@ DEFAULT_CATALOG = Path("outputs/01a1bbcd-8dff-7bc3-92f3-60a1d71522b8/Колле�
 NS = {"x": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
 REL = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 INITIAL_PUBLISHED_AT = "2026-11-08T18:06:56+00:00"
+# Preserve published card IDs after correcting these photo filenames.
+RENAMED_PHOTO_IDS = {
+    "Рифленые; 2в1 Креветка на гриле и соус для морепродуктов; Таиланд.jpg": "8a0d5e14aa7f3bcb",
+    "Рифленые; 2в1 Креветка на гриле и соус для морепродуктов 2; Таиланд.JPG": "a11529e5611a1e50",
+}
 
 
 def normalized(text):
@@ -100,7 +105,7 @@ def build(source_root, catalog):
         source = by_name.get(filename)
         if not source:
             raise ValueError(f"Photo missing: {filename}")
-        identifier = hashlib.sha256(filename.encode("utf-8")).hexdigest()[:16]
+        identifier = RENAMED_PHOTO_IDS.get(filename) or hashlib.sha256(filename.encode("utf-8")).hexdigest()[:16]
         if identifier in seen:
             raise ValueError(f"Duplicate catalogue photo: {filename}")
         seen.add(identifier)
