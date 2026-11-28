@@ -31,3 +31,34 @@
 .variant-picker--dialog .variant-picker-label{font-size:12px;color:#6f6655;margin-bottom:10px}
 .variant-picker--dialog .variant-thumb{flex-basis:54px;width:54px;height:77px}
 @media(max-width:620px){.variant-picker--card{margin:0 11px 13px;padding-top:9px}.variant-picker--card .variant-picker-label{font-size:9px}.variant-thumbs{gap:6px}.dialog-variants{margin-bottom:20px}.variant-picker--dialog .variant-picker-label{font-size:11px}}
+
+/* Fit the photo's cropped area inside the existing frame at every screen size. */
+.pack-photo {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  container-type: size;
+}
+.pack-photo > img { width: 100%; height: 100%; object-fit: contain; }
+.pack-photo-crop {
+  position: relative;
+  display: block;
+  width: min(100cqw, calc(100cqh * var(--crop-ratio)));
+  aspect-ratio: var(--crop-ratio);
+  overflow: hidden;
+  border-radius: 3px;
+}
+.pack-photo-crop > img {
+  position: absolute;
+  max-width: none;
+  max-height: none;
+  object-fit: fill;
+}
+.card:hover .card-image img { transform: none; }
+.variant-thumb .pack-photo { inset: 3px; }
+.dialog-photo { position: relative; }
+.dialog-photo .pack-photo { inset: 15px; }
+@media (max-width: 620px) {
+  .dialog-photo .pack-photo { inset: 10px; }
+}

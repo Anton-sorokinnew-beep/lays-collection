@@ -1,4 +1,5 @@
 import { FLAGS, countryLabel, compare, plural, searchText, selectItems, facetCounts, indexVariants, readState, stateParams } from './core.mjs?v=7';
+import photoCrops from './photo-crops.mjs?v=1';
 
 const $ = (id) => document.getElementById(id);
 const PAGE_SIZE = 24;
@@ -44,6 +45,34 @@ function updateFilterOptions() {
   fillSelect('flavor', counts.flavor, 'Все вкусы');
 }
 
+function packPhoto(item, { full = false, alt = '', lazy = false } = {}) {
+  const viewport = document.createElement('span');
+  viewport.className = 'pack-photo';
+  const image = new Image();
+  image.alt = alt;
+  image.decoding = 'async';
+  if (lazy) image.loading = 'lazy';
+  image.src = full ? item.image : item.thumbnail;
+
+  const crop = photoCrops[item.id];
+  if (!crop) {
+    viewport.append(image);
+    return viewport;
+  }
+
+  const [left, top, width, height, ratio] = crop;
+  const frame = document.createElement('span');
+  frame.className = 'pack-photo-crop';
+  frame.style.setProperty('--crop-ratio', ratio);
+  image.style.width = `${100 / width}%`;
+  image.style.height = `${100 / height}%`;
+  image.style.left = `${-100 * left / width}%`;
+  image.style.top = `${-100 * top / height}%`;
+  frame.append(image);
+  viewport.append(frame);
+  return viewport;
+}
+
 function variantPicker(item, context) {
   const variants = variantIndex.get(item.id) || [];
   if (variants.length < 2) return null;
@@ -66,18 +95,11 @@ function variantPicker(item, context) {
     thumb.setAttribute('aria-pressed', String(active));
     thumb.setAttribute('aria-label', `Вариант ${variant.variant}, ${variant.flavor}, ${countryLabel(variant.country)}, ${variant.type}`);
     thumb.title = `Вариант ${variant.variant}`;
-    const image = new Image();
-    image.src = variant.thumbnail;
-    image.alt = '';
-    image.loading = 'lazy';
-    image.decoding = 'async';
-    image.width = 44;
-    image.height = 62;
     const number = document.createElement('span');
     number.className = 'variant-number';
     number.textContent = variant.variant;
     number.setAttribute('aria-hidden', 'true');
-    thumb.append(image, number);
+    thumb.append(packPhoto(variant, { lazy: true }), number);
     thumb.addEventListener('click', () => {
       const inDialog = context === 'dialog';
       if (inDialog && currentItem?.id === variant.id) return;
@@ -113,14 +135,7 @@ function card(item) {
   button.setAttribute('aria-label', `${item.flavor}, ${countryLabel(item.country)}, ${item.type}, вариант ${item.variant}. Открыть фото`);
   const photo = document.createElement('div');
   photo.className = 'card-image';
-  const image = new Image();
-  image.src = item.thumbnail;
-  image.alt = `Lay’s — ${item.flavor}, ${countryLabel(item.country)}`;
-  image.loading = 'lazy';
-  image.decoding = 'async';
-  image.width = 540;
-  image.height = 680;
-  photo.append(image);
+  photo.append(packPhoto(item, { alt: `Lay’s — ${item.flavor}, ${countryLabel(item.country)}`, lazy: true }));
   if (item.variant > 1) {
     const variant = document.createElement('span');
     variant.className = 'card-variant';
@@ -230,8 +245,10 @@ function openPack(item, source = null, updateUrl = true) {
   $('dialog-variant').textContent = item.variant;
   $('dialog-number').textContent = `№ ${item.number}`;
   $('dialog-added').textContent = item.addedAt ? new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Moscow' }).format(new Date(item.addedAt)) : '—';
-  $('dialog-image').src = item.image;
-  $('dialog-image').alt = `Упаковка Lay’s ${item.flavor}, ${countryLabel(item.country)}, ${item.type}, вариант ${item.variant}`;
+  $('dialog-image').replaceChildren(packPhoto(item, {
+    full: true,
+    alt: `Упаковка Lay’s ${item.flavor}, ${countryLabel(item.country)}, ${item.type}, вариант ${item.variant}`,
+  }));
   $('open-photo').href = item.image;
   renderDialogVariants(item);
   $('share-status').textContent = '';
@@ -247,7 +264,7 @@ function openPack(item, source = null, updateUrl = true) {
 dialog.addEventListener('close', () => {
   currentItem = null;
   document.body.style.overflow = '';
-  $('dialog-image').removeAttribute('src');
+  $('dialog-image').replaceChildren();
   syncUrl('');
   if (opener?.isConnected) opener.focus({ preventScroll: true });
 });
@@ -335,7 +352,9 @@ async function load() {
       items.find((i) => i.country === 'Китай' && i.flavor === 'Острые раки' && i.variant === 1),
       items.find((i) => i.country === 'Россия' && i.flavor === 'Сыр' && i.variant === 1),
     ];
-    ['hero-left', 'hero-right', 'hero-center'].forEach((id, index) => { $(id).src = (hero[index] || items[index]).thumbnail; });
+    ['hero-left', 'hero-right', 'hero-center'].forEach((id, index) => {
+      $(id).replaceChildren(packPhoto(hero[index] || items[index]));
+    });
     const date = new Date(data.updatedAt);
     $('updated').textContent = `Каталог обновлён ${new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Moscow' }).format(date)}`;
     const itemId = new URLSearchParams(location.search).get('item');
