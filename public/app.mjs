@@ -1,4 +1,4 @@
-import { FLAGS, countryLabel, compare, plural, searchText, selectItems, facetCounts, indexVariants, readState, stateParams } from './core.mjs?v=7';
+import { FLAGS, countryLabel, compare, plural, searchText, selectItems, facetCounts, indexVariants, pickHeroPhotos, readState, stateParams } from './core.mjs?v=8';
 import photoCrops from './photo-crops.mjs?v=1';
 
 const $ = (id) => document.getElementById(id);
@@ -71,6 +71,29 @@ function packPhoto(item, { full = false, alt = '', lazy = false } = {}) {
   frame.append(image);
   viewport.append(frame);
   return viewport;
+}
+
+function renderHero() {
+  const storageKey = 'lays-collection.hero-flavors';
+  let previous = [];
+  try {
+    const saved = JSON.parse(localStorage.getItem(storageKey));
+    if (Array.isArray(saved)) previous = saved.filter((flavor) => typeof flavor === 'string');
+  } catch {
+    // The collage still works if browser storage is unavailable.
+  }
+  const photos = pickHeroPhotos(items, previous);
+  ['hero-left', 'hero-right', 'hero-center'].forEach((id, index) => {
+    const photo = photos[index];
+    const frame = $(id);
+    frame.replaceChildren();
+    if (photo) frame.append(packPhoto(photo));
+  });
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(photos.map((item) => item.flavor)));
+  } catch {
+    // Remembering the previous selection is optional.
+  }
 }
 
 function variantPicker(item, context) {
@@ -347,14 +370,7 @@ async function load() {
     $('countries-label').textContent = plural(countries, ['страна', 'страны', 'стран']);
     $('types-stat').textContent = types;
     $('types-label').textContent = plural(types, ['вид продукта', 'вида продуктов', 'видов продуктов']);
-    const hero = [
-      items.find((i) => i.country === 'Россия' && i.flavor === 'Сметана и зелень' && i.variant === 1),
-      items.find((i) => i.country === 'Китай' && i.flavor === 'Острые раки' && i.variant === 1),
-      items.find((i) => i.country === 'Россия' && i.flavor === 'Сыр' && i.variant === 1),
-    ];
-    ['hero-left', 'hero-right', 'hero-center'].forEach((id, index) => {
-      $(id).replaceChildren(packPhoto(hero[index] || items[index]));
-    });
+    renderHero();
     const date = new Date(data.updatedAt);
     $('updated').textContent = `Каталог обновлён ${new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Moscow' }).format(date)}`;
     const itemId = new URLSearchParams(location.search).get('item');

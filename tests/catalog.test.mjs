@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
-import { FLAGS, selectItems, facetCounts, indexVariants, normalize, readState, stateParams, plural } from '../public/core.mjs';
+import { FLAGS, selectItems, facetCounts, indexVariants, normalize, pickHeroPhotos, readState, stateParams, plural } from '../public/core.mjs';
 
 const data = JSON.parse(readFileSync(new URL('../public/catalog.json', import.meta.url)));
 const items = data.items;
@@ -53,6 +53,21 @@ test('Search handles case, ё/е, punctuation, combined words and no matches', (
   assert.equal(selectItems(items, { ...blank, q: 'zxqv-неттакоговкуса' }).length, 0);
   assert.equal(selectItems(items, { ...blank, country: 'Польша', type: 'Тубус' }).length, 0);
   assert.ok(selectItems(items, { ...blank, q: 'Беларусь' }).some((i) => i.country === 'Беларусия'));
+});
+
+test('The hero collage picks different flavors and skips the previous selection', () => {
+  const first = pickHeroPhotos(items, [], () => 0);
+  const second = pickHeroPhotos(items, first.map((item) => item.flavor), () => 0);
+  const flavors = [...first, ...second].map((item) => normalize(item.flavor));
+  assert.equal(first.length, 3);
+  assert.equal(second.length, 3);
+  assert.equal(new Set(flavors).size, 6);
+});
+
+test('The hero collage fills available slots without repeating a flavor', () => {
+  const samples = [{ flavor: 'Зелёный лук' }, { flavor: 'Зеленый лук' }, { flavor: 'Сыр' }];
+  assert.deepEqual(pickHeroPhotos(samples, ['Зелёный лук'], () => 0), [samples[2], samples[0]]);
+  assert.deepEqual(pickHeroPhotos([], [], () => 0), []);
 });
 
 test('Shared search links round-trip Cyrillic and special characters', () => {

@@ -43,6 +43,28 @@ export function indexVariants(items) {
   return byId;
 }
 
+export function pickHeroPhotos(items, previousFlavors = [], random = Math.random) {
+  const byFlavor = new Map();
+  for (const item of items) {
+    const flavor = normalize(item.flavor);
+    if (!byFlavor.has(flavor)) byFlavor.set(flavor, []);
+    byFlavor.get(flavor).push(item);
+  }
+
+  const previous = new Set(previousFlavors.map(normalize));
+  const fresh = [...byFlavor.keys()].filter((flavor) => !previous.has(flavor));
+  const recent = [...byFlavor.keys()].filter((flavor) => previous.has(flavor));
+  const photos = [];
+  for (const pool of [fresh, recent]) {
+    while (pool.length && photos.length < 3) {
+      const [flavor] = pool.splice(Math.floor(random() * pool.length), 1);
+      const variants = byFlavor.get(flavor);
+      photos.push(variants[Math.floor(random() * variants.length)]);
+    }
+  }
+  return photos;
+}
+
 const FILTER_FIELDS = ['country', 'type', 'flavor'];
 
 function matchesItem(item, state, terms, ignoredField = '') {
